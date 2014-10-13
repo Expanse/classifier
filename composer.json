@@ -13,7 +13,16 @@
     ],
 	"require": {
         "php": ">=5.3",
+		"camspiers/porter-stemmer": "1.0.0"
 	},
+	"require-dev": {
+		"phpunit/phpunit": "4.4.*@dev"
+	},
+	"autoload": {
+        "psr-0": {
+            "Expanse\\Classifier": "src/"
+        }
+    },
 	"support": {
         "issues": "https://bitbucket.org/expanse/classifier/issues"
     },
