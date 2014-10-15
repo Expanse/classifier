@@ -22,6 +22,23 @@ class LSITest extends PHPUnit_Framework_TestCase {
 		$this->assertEquals(array(array(7, 10), array(15, 22)), $result);
 	}
 
+	public function testMatrixMultiplicationLong() {
+		$matrix1 = array(array(1,2,3,4), array(3,4,5,6));
+		$matrix2 = array(array(1,2), array(3,4), array(5,6), array(7,8));
+
+		$result = Classifier\LSI::matrix_mult($matrix1, $matrix2);
+		$this->assertEquals(array(array(50, 60), array(82, 100)), $result);
+	}
+
+	public function testNotAutoRebuild() {
+		$lsi = new Classifier\LSI(array('auto_rebuild' => false));
+		$lsi->add_item($this->str1, "Dog");
+		$lsi->add_item($this->str2, "Dog");
+		$this->assertTrue($lsi->needs_rebuild());
+		$lsi->build_index();
+		$this->assertFalse($lsi->needs_rebuild());
+	}
+
 	public function testBasicIndexing() {
 		$lsi = new Classifier\LSI();
 		$lsi->add_item($this->str1);
