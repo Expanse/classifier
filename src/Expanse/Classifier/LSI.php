@@ -20,8 +20,11 @@ class LSI extends \Expanse\Classifier {
 		return (count($this->items) > 1 && ($this->version != $this->built_at_version));
 	}
 
-	public function add_item($item, array $categories = array(), Closure $block = null) {
+	public function add_item($item, $categories = null, Closure $block = null) {
 		$clean_word_hash = WordHash::clean_word_hash((is_object($block) && ($block instanceof Closure)) ? call_user_func_array($block, array($item)) : $item);
+		if (! is_array($categories)) {
+			$categories = array($categories);
+		}
 		$this->items[$item] = new ContentNode($clean_word_hash, $categories);
 		$this->version++;
 		if ($this->auto_rebuild) {
@@ -81,7 +84,8 @@ class LSI extends \Expanse\Classifier {
 		$content_node = $this->node_for_content( $doc, $block );
 		$_items = $this->items;
 		$result = array_map(function($item) use ($content_node) {
-			$val = self::matrix_mult(array($content_node->search_vector()), $item->search_vector());
+			$cn_mtx = new Matrix($content_node->search_vector());
+			$val = $cn_mtx->mult(array($item->search_vector()));
 			return array($item, $val[0]);
 		}, $_items);
 		uksort($result, function($a, $b) {
@@ -127,7 +131,6 @@ class LSI extends \Expanse\Classifier {
 		$result = array_map(function($x) { return $x[0]; }, $carry);
 		$keys = array_slice(array_keys($result), 0, $max_nearest);
 		$results = array_keys(array_intersect_key($result, array_flip($keys)));
-		var_dump($results);
 		return $results;
 	}
 
