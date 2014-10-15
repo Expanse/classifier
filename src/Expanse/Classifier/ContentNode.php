@@ -18,12 +18,12 @@ class ContentNode {
 	}
 
 	public function search_vector() {
-		if (! is_null($this->lsi_vector)) return $this->lsi_vector->toArray();
+		if (! is_null($this->lsi_vector)) return $this->lsi_vector;
 		return $this->raw_vector->toArray();
 	}
 
 	public function search_norm() {
-		if (! is_null($this->lsi_norm)) return $this->lsi_norm->toArray();
+		if (! is_null($this->lsi_norm)) return $this->lsi_norm;
 		return $this->raw_norm->toArray();
 	}
 

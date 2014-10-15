@@ -24,7 +24,9 @@ class LSI extends \Expanse\Classifier {
 		$clean_word_hash = WordHash::clean_word_hash((is_object($block) && ($block instanceof Closure)) ? call_user_func_array($block, array($item)) : $item);
 		$this->items[$item] = new ContentNode($clean_word_hash, $categories);
 		$this->version++;
-		if ($this->auto_rebuild) $this->build_index();
+		if ($this->auto_rebuild) {
+			$this->build_index();
+		}
 	}
 
 	public function categories_for($item) {
@@ -51,22 +53,20 @@ class LSI extends \Expanse\Classifier {
 		}, $doc_list);
 
 		$tdm = self::transpose($tda);
-		$ntdm = $this->build_reduced_matrix($tdm, $cutoff);
+		$ntdm = new Matrix($this->build_reduced_matrix($tdm, $cutoff));
 
 		for($col = 0; $col < count($ntdm); $col++) {
-			// if (isset($doc_list_map[$col])) {
-			// 	$doc_list[$doc_list_map[$col]]->lsi_vector = array_map(function($i) use ($col) {
-			// 		return $i[$col];
-			// 	}, $ntdm);
-			// // doc_list[col].lsi_vector = ntdm.column(col) if doc_list[col]
-			// // doc_list[col].lsi_norm = ntdm.column(col).normalize  if doc_list[col]
-			// }
+			if (isset($doc_list_map[$col])) {
+				$doc_list[$doc_list_map[$col]]->lsi_vector = $ntdm->column($col);
+				$doc_list[$doc_list_map[$col]]->lsi_norm = $ntdm->column($col, true)->normalize();
+			}
 		}
 
 		$this->built_at_version = $this->version;
 	}
 
 	public function highest_relative_content( $max_chunks=10 ) {
+		throw new \BadMethodCallException("Bad method " . __METHOD__);
 		// return [] if needs_rebuild?
 
 		// avg_density = Hash.new
@@ -81,7 +81,7 @@ class LSI extends \Expanse\Classifier {
 		$content_node = $this->node_for_content( $doc, $block );
 		$_items = $this->items;
 		$result = array_map(function($item) use ($content_node) {
-			$val = self::matrix_mult($content_node->search_vector(), self::transpose($item->search_vector()));
+			$val = self::matrix_mult(array($content_node->search_vector()), $item->search_vector());
 			return array($item, $val[0]);
 		}, $_items);
 		uksort($result, function($a, $b) {
@@ -93,6 +93,7 @@ class LSI extends \Expanse\Classifier {
 	}
 
 	public function proximity_norms_for_content( $doc, Closure $block = null) {
+		throw new \BadMethodCallException("Bad method " . __METHOD__);
 	//		return [] if needs_rebuild?
 
 	//		content_node = node_for_content( doc, &block )
@@ -109,24 +110,29 @@ class LSI extends \Expanse\Classifier {
 	} 
 
 	public function search( $string, $max_nearest=3 ) {
+		throw new \BadMethodCallException("Bad method " . __METHOD__);
 	//			return [] if needs_rebuild?
 	//			carry = proximity_norms_for_content( string )
 	//			result = carry.collect { |x| x[0] }
 	//			return result[0..max_nearest-1]
 	}
 
-	public function find_related( $doc, $max_nearest=3, Closure $block = null) {
+	public function find_related( $doc, $max_nearest = 3, Closure $block = null) {
 		$carry = $this->proximity_array_for_content( $doc, $block );
-		foreach ($carry as $pair) {
-			if ($pair[0] == $doc) {
-				unset($pair);
+		foreach ($carry as $id => $pair) {
+			if ($id == $doc) {
+				unset($carry[$id]);
 			}
 		}
 		$result = array_map(function($x) { return $x[0]; }, $carry);
-		return $result[range(0, $max_nearest - 1)];
+		$keys = array_slice(array_keys($result), 0, $max_nearest);
+		$results = array_keys(array_intersect_key($result, array_flip($keys)));
+		var_dump($results);
+		return $results;
 	}
 
 	public function classify( $doc, $cutoff=0.30, Closure $block = null) {
+		throw new \BadMethodCallException("Bad method " . __METHOD__);
 	//			icutoff = (@items.size * cutoff).round
 	//			carry = proximity_array_for_content( doc, &block )
 	//			carry = carry[0..icutoff-1]
@@ -144,6 +150,7 @@ class LSI extends \Expanse\Classifier {
 	}
 
 	public function highest_ranked_stems( $doc, $count=3 ) {
+		throw new \BadMethodCallException("Bad method " . __METHOD__);
 	//			raise "Requested stem ranking on non-indexed content!" unless @items[doc]
 	//			arr = node_for_content(doc).lsi_vector.to_a
 	//			top_n = arr.sort.reverse[0..count-1]
@@ -200,7 +207,6 @@ class LSI extends \Expanse\Classifier {
 	 */
 	private static function transpose($array) {
 		array_unshift($array, null);
-		var_dump($array);
 		$result = call_user_func_array('array_map', $array);
 		return $result;
 	}
@@ -303,67 +309,8 @@ class LSI extends \Expanse\Classifier {
 	}
 
 	public static function matrix_mult($matrix1, $matrix2) {
-		$array_1_cols = count($matrix1);
-		$array_1_rows = count($matrix1[0]);
-		$array_2_cols = count($matrix2);
-		$array_2_rows = count($matrix2[0]);
-
-		// Check to see if matrix multiplication is possible
-		if($array_1_cols == $array_2_rows) {
-
-			$m_cols = $array_2_cols;
-			$m_rows = $array_1_rows;
-
-			$array_3 = array();
-			$col_index = 1;
-
-			// Start loop for each column of the new matrix
-			while($col_index <= $m_cols) {
-				$m_col_index = $col_index - 1;
-				$sub_array[$col_index] = array();
-
-				// Start loop for each row of the new matrix
-				$row_index = 1;
-				while($row_index <= $m_rows) {
-					$m_row_index = $row_index - 1;
-
-					// Auxiliary array for each row of A
-					$a_row[$row_index] = array();
-
-					$a_index = 1;
-					while($a_index <= $array_1_cols) {
-						$start_p = $a_index - 1;
-						$el_part_[$a_index] = $matrix1[$start_p];
-						$el_part_[$a_index] = $el_part_[$a_index][$m_row_index];
-						array_push($a_row[$row_index], $el_part_[$a_index]);
-						++$a_index;
-					}
-
-					// Array for columns of B
-					$b_col[$col_index] = $matrix2[$m_col_index];
-
-					// Build matrix C - defined over the rows of A and the columns of B
-					$c_part[$row_index][$col_index] = array_map(array('self', 'mul'), $a_row[$row_index], $b_col[$col_index]);
-					$c_el[$row_index][$col_index] = array_sum($c_part[$row_index][$col_index]);
-					array_push($sub_array[$col_index], $c_el[$row_index][$col_index]);
-
-					// End row loop
-					++$row_index;
-				}
-
-				array_push($array_3,$sub_array[$col_index]);
-
-				++$col_index;
-			}
-
-			return $array_3;
-
-		} else {
-			var_dump([ $matrix1, $matrix2 ]);
-			$backtrace = debug_backtrace();
-			var_dump($backtrace[2]);
-			throw new \Exception("Not possible; matrix1 has cols ${array_1_cols}, matrix2 has rows ${array_2_rows}");
-		}
+		$m = new Matrix($matrix1);
+		return $m->mult($matrix2);
 	}
 
 	private static function mul($x, $y) {
