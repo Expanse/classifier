@@ -11,6 +11,9 @@
          syntaxCheck="false"
 >
     <testsuites>
+		<testsuite name="Matrix Tests">
+			<file>./tests/MatrixTest.php</file>
+		</testsuite>
 		<testsuite name="Vector Tests">
 			<file>./tests/VectorTest.php</file>
 		</testsuite>
