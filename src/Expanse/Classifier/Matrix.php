@@ -35,12 +35,14 @@ class Matrix {
 	public function mult($matrix2) {
 		$m1r = $this->row_count;
 		$m1c = $this->column_count;
+
 		$m2r = count($matrix2);
 		$m2c = count($matrix2[0]);
 
 		if ($m1c != $m2r) {
 			throw new \Exception("Not possible; matrix1 has cols ${m1c}, matrix2 has rows ${m2r}");
 		}
+
 		$m3 = array();
 		for($i = 0; $i < $m1r; $i++) {
 			for($j = 0; $j < $m2c; $j++) {

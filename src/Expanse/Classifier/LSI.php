@@ -89,8 +89,8 @@ class LSI extends \Expanse\Classifier {
 			return array($item, $val[0]);
 		}, $_items);
 		uksort($result, function($a, $b) {
-			if ($b[1] == $a[1]) return 0;
-			if ($b[1] > $a[1]) return 1;
+			if ($b == $a) return 0;
+			if ($b > $a) return 1;
 			return -1;
 		});
 		return array_reverse($result);

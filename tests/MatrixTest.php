@@ -35,4 +35,13 @@ class MatrixTest extends PHPUnit_Framework_TestCase {
 		$this->assertInstanceOf('Expanse\Classifier\Vector', $column);
 		$this->assertEquals(array(3, 6), $column->toArray());
 	}
+
+	public function testMatrixMult() {
+		$matrix = new Expanse\Classifier\Matrix(array(0, 0.790252768028, 1.0978651022893, -1.443888071676, -0.30106161052898));
+		$result = $matrix->mult(array(array(0, 0.790252768028, 1.0978651022893, -1.443888071676, -0.30106161052898)));
+
+		var_dump($result);
+		exit;
+
+	}
 }
